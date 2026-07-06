@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const { logout, token: authToken, user: authUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
+
   const [home, setHome] = useState({});
   const [about, setAbout] = useState({});
   const [skills, setSkills] = useState([]);
@@ -37,10 +38,10 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       const [homeRes, aboutRes, skillsRes, projectsRes] = await Promise.all([
-        api.get('/home', getRequestConfig()),
-        api.get('/about', getRequestConfig()),
-        api.get('/skills', getRequestConfig()),
-        api.get('/projects', getRequestConfig())
+        api.get('/home', getRequestConfig()).catch(err => ({ data: {} })),
+        api.get('/about', getRequestConfig()).catch(err => ({ data: {} })),
+        api.get('/skills', getRequestConfig()).catch(err => ({ data: [] })),
+        api.get('/projects', getRequestConfig()).catch(err => ({ data: [] }))
       ]);
       setHome(homeRes.data || {});
       setAbout(aboutRes.data || {});
@@ -70,6 +71,91 @@ export default function DashboardPage() {
     setTimeout(() => setMessage(''), 3000);
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      await fetchData();
+      showMessage('Data refreshed successfully');
+    } catch (error) {
+      console.error('Refresh error:', error);
+      showMessage('Unable to refresh data', true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
+      showMessage('Only JPEG, PNG, and WebP images are allowed', true);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage('File size must be less than 5MB', true);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setLoading(true);
+    try {
+      const response = await api.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+        }
+      });
+      const imageUrl = response.data.url;
+      setHome((current) => ({ ...current, profileImage: imageUrl }));
+      showMessage('Image uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      showMessage('Unable to upload image', true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProjectImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
+      showMessage('Only JPEG, PNG, and WebP images are allowed', true);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage('File size must be less than 5MB', true);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setLoading(true);
+    try {
+      const response = await api.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+        }
+      });
+      const imageUrl = response.data.url;
+      setForm((current) => ({ ...current, image: imageUrl }));
+      showMessage('Image uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      showMessage('Unable to upload image', true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const saveHome = async (e) => {
     e.preventDefault();
     if (!home.name || !home.greeting) {
@@ -78,12 +164,20 @@ export default function DashboardPage() {
     }
     setLoading(true);
     try {
-      await api.put('/home', home, getRequestConfig());
+      const response = await api.put('/home', home, getRequestConfig());
+      console.log('Home save response:', response.data);
       await fetchData();
       showMessage('Home section updated successfully');
     } catch (error) {
       console.error('Save home error:', error);
-      showMessage('Unable to save home settings', true);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        showMessage(`Error: ${error.response.data.message || 'Unable to save home settings'}`, true);
+      } else if (error.request) {
+        showMessage('No response from server. Check if backend is running.', true);
+      } else {
+        showMessage('Unable to save home settings', true);
+      }
     } finally {
       setLoading(false);
     }
@@ -97,12 +191,20 @@ export default function DashboardPage() {
     }
     setLoading(true);
     try {
-      await api.put('/about', about, getRequestConfig());
+      const response = await api.put('/about', about, getRequestConfig());
+      console.log('About save response:', response.data);
       await fetchData();
       showMessage('About section updated successfully');
     } catch (error) {
       console.error('Save about error:', error);
-      showMessage('Unable to save about settings', true);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        showMessage(`Error: ${error.response.data.message || 'Unable to save about settings'}`, true);
+      } else if (error.request) {
+        showMessage('No response from server. Check if backend is running.', true);
+      } else {
+        showMessage('Unable to save about settings', true);
+      }
     } finally {
       setLoading(false);
     }
@@ -299,24 +401,62 @@ export default function DashboardPage() {
                 />
               </label>
               <label>
-                Profile image URL
-                <input 
-                  value={home.profileImage || ''} 
-                  onChange={(e) => setHome((current) => ({ ...current, profileImage: e.target.value }))} 
-                  placeholder="https://example.com/image.jpg" 
-                />
+                Profile image
+                <div className="url-input-group">
+                  <input 
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleImageUpload}
+                    disabled={loading}
+                  />
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary url-action-btn"
+                    onClick={() => document.querySelector('input[type="file"]').click()}
+                    disabled={loading}
+                  >
+                    Browse
+                  </button>
+                </div>
+                {home.profileImage && (
+                  <div className="image-preview">
+                    <img src={home.profileImage} alt="Profile preview" onError={(e) => e.target.style.display = 'none'} />
+                  </div>
+                )}
               </label>
               <label>
                 CV URL
-                <input 
-                  value={home.cvUrl || ''} 
-                  onChange={(e) => setHome((current) => ({ ...current, cvUrl: e.target.value }))} 
-                  placeholder="https://example.com/cv.pdf" 
-                />
+                <div className="url-input-group">
+                  <input 
+                    value={home.cvUrl || ''} 
+                    onChange={(e) => setHome((current) => ({ ...current, cvUrl: e.target.value }))} 
+                    placeholder="https://example.com/cv.pdf" 
+                  />
+                  {home.cvUrl && (
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary url-action-btn"
+                      onClick={() => window.open(home.cvUrl, '_blank')}
+                      title="Open in new tab"
+                    >
+                      Open
+                    </button>
+                  )}
+                </div>
               </label>
-              <button className="btn btn-primary" type="submit" disabled={loading}>
-                {loading ? 'Saving...' : 'Save home'}
-              </button>
+              <div className="form-actions">
+                <button className="btn btn-primary" type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save home'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleRefresh}
+                  disabled={loading}
+                >
+                  {loading ? 'Refreshing...' : 'Update'}
+                </button>
+              </div>
             </form>
           </section>
         )}
@@ -404,9 +544,19 @@ export default function DashboardPage() {
                   placeholder="Your nationality" 
                 />
               </label>
-              <button className="btn btn-primary" type="submit" disabled={loading}>
-                {loading ? 'Saving...' : 'Save about'}
-              </button>
+              <div className="form-actions">
+                <button className="btn btn-primary" type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save about'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleRefresh}
+                  disabled={loading}
+                >
+                  {loading ? 'Refreshing...' : 'Update'}
+                </button>
+              </div>
             </form>
           </section>
         )}
@@ -560,28 +710,82 @@ export default function DashboardPage() {
                     />
                   </label>
                   <label>
-                    Image URL
-                    <input 
-                      value={form.image || ''} 
-                      onChange={(e) => setForm({ ...form, image: e.target.value })} 
-                      placeholder="https://example.com/project-image.jpg" 
-                    />
+                    Project image
+                    <div className="url-input-group">
+                      <input 
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        onChange={handleProjectImageUpload}
+                        disabled={loading}
+                      />
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary url-action-btn"
+                        onClick={() => {
+                          const fileInput = document.querySelectorAll('input[type="file"]');
+                          const projectFileInput = fileInput[fileInput.length - 1];
+                          if (projectFileInput) projectFileInput.click();
+                        }}
+                        disabled={loading}
+                      >
+                        Browse
+                      </button>
+                      {form.image && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary url-action-btn"
+                          onClick={() => window.open(form.image, '_blank')}
+                          title="Open in new tab"
+                        >
+                          View
+                        </button>
+                      )}
+                    </div>
+                    {form.image && (
+                      <div className="image-preview">
+                        <img src={form.image} alt="Project preview" onError={(e) => e.target.style.display = 'none'} />
+                      </div>
+                    )}
                   </label>
                   <label>
                     GitHub URL
-                    <input 
-                      value={form.github || ''} 
-                      onChange={(e) => setForm({ ...form, github: e.target.value })} 
-                      placeholder="https://github.com/username/project" 
-                    />
+                    <div className="url-input-group">
+                      <input 
+                        value={form.github || ''} 
+                        onChange={(e) => setForm({ ...form, github: e.target.value })} 
+                        placeholder="https://github.com/username/project" 
+                      />
+                      {form.github && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary url-action-btn"
+                          onClick={() => window.open(form.github, '_blank')}
+                          title="Open in new tab"
+                        >
+                          Open
+                        </button>
+                      )}
+                    </div>
                   </label>
                   <label>
                     Demo URL
-                    <input 
-                      value={form.demo || ''} 
-                      onChange={(e) => setForm({ ...form, demo: e.target.value })} 
-                      placeholder="https://project-demo.com" 
-                    />
+                    <div className="url-input-group">
+                      <input 
+                        value={form.demo || ''} 
+                        onChange={(e) => setForm({ ...form, demo: e.target.value })} 
+                        placeholder="https://project-demo.com" 
+                      />
+                      {form.demo && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary url-action-btn"
+                          onClick={() => window.open(form.demo, '_blank')}
+                          title="Open in new tab"
+                        >
+                          Open
+                        </button>
+                      )}
+                    </div>
                   </label>
                   <div className="form-actions">
                     <button className="btn btn-primary" type="submit" disabled={loading}>
