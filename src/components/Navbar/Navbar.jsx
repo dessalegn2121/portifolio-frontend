@@ -60,7 +60,11 @@ export default function Navbar({ brand }) {
     <header className={`navbar ${scrolled ? 'scrolled' : ''} ${visible ? 'visible' : 'hidden'}`}>
       <div className="nav-container">
         <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
-          <FaCode className="logo-icon" />
+          <img
+            src={encodeURI('/profile image.png')}
+            alt="Portfolio logo"
+            className="logo-image"
+          />
           <span className="logo-text">{brand || 'Portfolio'}</span>
           <span className="logo-dot">.</span>
         </Link>
