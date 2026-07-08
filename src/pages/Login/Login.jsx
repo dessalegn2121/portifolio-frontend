@@ -18,21 +18,11 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Validate identifier - only allow letters, numbers, @, ., _, and -
-  const validateIdentifier = (value) => {
-    // Allow alphanumeric, @, ., _, and - for email/username
-    const regex = /^[a-zA-Z0-9@._-]*$/;
-    return regex.test(value);
-  };
-
   const handleIdentifierChange = (e) => {
     const value = e.target.value;
-    // Only update if valid or empty
-    if (value === '' || validateIdentifier(value)) {
-      setIdentifier(value);
-      // Clear error when user starts typing
-      if (error) setError('');
-    }
+    setIdentifier(value);
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {

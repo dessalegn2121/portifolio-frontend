@@ -16,7 +16,7 @@ const fallbackHome = {
   greeting: 'Hello, I am',
   introduction: 'I build premium web experiences with the MERN stack.',
   titles: ['Full Stack Developer', 'MERN Stack Developer', 'Frontend Developer', 'Software Engineer'],
-  profileImage: '',
+  profileImage: '/profile image.png',
   cvUrl: '#',
   socialLinks: {
     github: 'https://github.com',

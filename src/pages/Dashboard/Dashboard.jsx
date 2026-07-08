@@ -88,8 +88,8 @@ export default function DashboardPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
-      showMessage('Only JPEG, PNG, and WebP images are allowed', true);
+    if (!file.type.match(/image\/(jpeg|jpg|png|webp|bmp|gif)/)) {
+      showMessage('Only JPEG, PNG, WebP, BMP, and GIF images are allowed', true);
       return;
     }
 
@@ -124,8 +124,8 @@ export default function DashboardPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
-      showMessage('Only JPEG, PNG, and WebP images are allowed', true);
+    if (!file.type.match(/image\/(jpeg|jpg|png|webp|bmp|gif)/)) {
+      showMessage('Only JPEG, PNG, WebP, BMP, and GIF images are allowed', true);
       return;
     }
 
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                 <div className="url-input-group">
                   <input 
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/bmp,image/gif"
                     onChange={handleImageUpload}
                     disabled={loading}
                   />
@@ -714,7 +714,7 @@ export default function DashboardPage() {
                     <div className="url-input-group">
                       <input 
                         type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/bmp,image/gif"
                         onChange={handleProjectImageUpload}
                         disabled={loading}
                       />

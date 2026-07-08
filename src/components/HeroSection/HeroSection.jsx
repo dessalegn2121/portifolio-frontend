@@ -56,11 +56,12 @@ export default function HeroSection({ home }) {
         <div className="hero-visual">
           <div className="hero-card glass-card">
             <div className="avatar-frame">
-              {home?.profileImage ? (
-                <img className="avatar" src={home.profileImage} alt={home.name || 'Profile'} />
-              ) : (
-                <div className="avatar-placeholder">AM</div>
-              )}
+              <img
+                className="avatar"
+                src={home?.profileImage || '/profile image.png'}
+                alt={home?.name || 'Profile'}
+                onError={(e) => { e.target.onerror = null; e.target.src = '/profile image.png'; }}
+              />
             </div>
             <div className="hero-meta">
               <p>Premium Portfolio</p>
